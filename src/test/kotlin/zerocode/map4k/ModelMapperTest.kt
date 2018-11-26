@@ -1,3 +1,5 @@
+package zerocode.map4k
+
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.bson.types.ObjectId
