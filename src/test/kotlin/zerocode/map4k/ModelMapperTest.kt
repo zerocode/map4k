@@ -5,10 +5,17 @@ import com.natpryce.hamkrest.equalTo
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import zercode.map4k.ModelMapper
-import zercode.map4k.conversions.TypeMap
-import zercode.map4k.conversions.TypeMapRegistry
-import zercode.map4k.conversions.TypeMappingException
+import com.github.pseudometa.map4k.ModelMapper
+import com.github.pseudometa.map4k.conversions.ArrayListToListConverter
+import com.github.pseudometa.map4k.conversions.EnumToStringConverter
+import com.github.pseudometa.map4k.conversions.ListToArrayListConverter
+import com.github.pseudometa.map4k.conversions.ObjectIdToStringConverter
+import com.github.pseudometa.map4k.conversions.StringToEnumConverter
+import com.github.pseudometa.map4k.conversions.StringToObjectIdConverter
+import com.github.pseudometa.map4k.conversions.TypeMap
+import com.github.pseudometa.map4k.conversions.TypeMapRegistry
+import com.github.pseudometa.map4k.conversions.TypeMappingException
+import com.github.pseudometa.map4k.conversions.ValueConverterRegistry
 import kotlin.reflect.KClass
 
 fun aRandomId(): String =
@@ -56,7 +63,17 @@ class ModelMapperTest {
             } as KClass<TargetType2>
     }
 
-    private val mapper = ModelMapper(TypeMapRegistry(TargetType1Map(), TargetType2Map()))
+    private val mapper = ModelMapper(
+        typeMapRegistry = TypeMapRegistry(TargetType1Map(), TargetType2Map()),
+        valueConverterRegistry = ValueConverterRegistry(
+            ObjectIdToStringConverter(),
+            StringToObjectIdConverter(),
+            ListToArrayListConverter(),
+            ArrayListToListConverter(),
+            EnumToStringConverter(),
+            StringToEnumConverter()
+        )
+    )
 
     @Test
     fun `can map from string to string`() {

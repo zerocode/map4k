@@ -1,4 +1,4 @@
-package zercode.map4k.model
+package com.github.pseudometa.map4k.model
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter

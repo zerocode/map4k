@@ -1,50 +1,31 @@
-package zercode.map4k
+package com.github.pseudometa.map4k
 
-import zercode.map4k.conversions.ArrayListToListConverter
-import zercode.map4k.conversions.EnumToStringConverter
-import zercode.map4k.conversions.ListToArrayListConverter
-import zercode.map4k.conversions.ObjectIdToStringConverter
-import zercode.map4k.conversions.StringToEnumConverter
-import zercode.map4k.conversions.StringToObjectIdConverter
-import zercode.map4k.conversions.TypeMapRegistry
-import zercode.map4k.conversions.TypeMappingException
-import zercode.map4k.conversions.ValueConverterRegistry
-import zercode.map4k.extensions.joinWhere
-import zercode.map4k.model.AbstractTarget
-import zercode.map4k.model.BasicSource
-import zercode.map4k.model.BasicTarget
-import zercode.map4k.model.CollectionSource
-import zercode.map4k.model.CollectionTarget
-import zercode.map4k.model.DataClassSource
-import zercode.map4k.model.DataClassTarget
-import zercode.map4k.model.ParameterTarget
-import zercode.map4k.model.PropertyModel
-import zercode.map4k.model.Source
-import zercode.map4k.model.Target
-import zercode.map4k.model.createSource
-import zercode.map4k.model.createTarget
+import com.github.pseudometa.map4k.conversions.TypeMapRegistry
+import com.github.pseudometa.map4k.conversions.TypeMappingException
+import com.github.pseudometa.map4k.conversions.ValueConverterRegistry
+import com.github.pseudometa.map4k.extensions.joinWhere
+import com.github.pseudometa.map4k.model.AbstractTarget
+import com.github.pseudometa.map4k.model.BasicSource
+import com.github.pseudometa.map4k.model.BasicTarget
+import com.github.pseudometa.map4k.model.CollectionSource
+import com.github.pseudometa.map4k.model.CollectionTarget
+import com.github.pseudometa.map4k.model.DataClassSource
+import com.github.pseudometa.map4k.model.DataClassTarget
+import com.github.pseudometa.map4k.model.ParameterTarget
+import com.github.pseudometa.map4k.model.PropertyModel
+import com.github.pseudometa.map4k.model.Source
+import com.github.pseudometa.map4k.model.Target
+import com.github.pseudometa.map4k.model.createSource
+import com.github.pseudometa.map4k.model.createTarget
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.primaryConstructor
 
-val mapper = ModelMapper()
-
-inline fun <reified TTarget : Any> mapTo(source: Any): TTarget =
-    mapper.mapTo(source, TTarget::class) as TTarget
-
 class ModelMapper(
-    private val typeMapRegistry: TypeMapRegistry = TypeMapRegistry()
+    private val typeMapRegistry: TypeMapRegistry = TypeMapRegistry(),
+    private val valueConverterRegistry: ValueConverterRegistry = ValueConverterRegistry()
 ) {
-    private val valueConverterRegistry = ValueConverterRegistry(
-        ObjectIdToStringConverter(),
-        StringToObjectIdConverter(),
-        ListToArrayListConverter(),
-        ArrayListToListConverter(),
-        EnumToStringConverter(),
-        StringToEnumConverter()
-    )
-
     inline fun <reified TTarget : Any> mapTo(source: Any): TTarget =
         mapTo(source, TTarget::class) as TTarget
 

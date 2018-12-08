@@ -1,4 +1,4 @@
-package zercode.map4k.conversions
+package com.github.pseudometa.map4k.conversions
 
 import kotlin.reflect.KClass
 

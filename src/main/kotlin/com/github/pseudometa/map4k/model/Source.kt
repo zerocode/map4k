@@ -1,4 +1,4 @@
-package zercode.map4k.model
+package com.github.pseudometa.map4k.model
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -24,11 +24,6 @@ data class DataClassSource(
     val simpleName: String = kClass.simpleName!!
     val propertyNames: List<String> = properties.map { it.name }
 }
-
-data class AbstractSource(
-    override val kClass: KClass<out Any>,
-    override val value: Any
-) : Source
 
 data class PropertyModel(
     val name: String,
