@@ -10,7 +10,7 @@ import com.github.zerocode.map4k.configuration.TypeDescriptor
 import com.github.zerocode.map4k.validation.MapConfigValidator
 import kotlin.reflect.KClass
 
-class MapperV3(private val config: MapConfig) {
+class Mapper(private val config: MapConfig) {
 
     init {
         MapConfigValidator(config).validate()

@@ -2,10 +2,8 @@ package com.github.zerocode.map4k.configuration
 
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
-@Tag("vnext2")
 class MapConfigTest {
 
     interface Source

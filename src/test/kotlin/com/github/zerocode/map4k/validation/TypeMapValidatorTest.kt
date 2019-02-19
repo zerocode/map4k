@@ -75,49 +75,4 @@ class TypeMapValidatorTest {
 
         assertThrows<InvalidConfigException> { validator.validate() }
     }
-
-    interface Source
-    interface Target
-
-//    @Test
-//    fun `does not throw where subTypeMap is compatible with parent TypeMap`() {
-//
-//        data class SourceImpl(val id: String) : Source
-//        data class TargetImpl(val id: Int) : Target
-//
-//        val typeMap = typeMap<Source, Target>(
-//            typeMap<SourceImpl, TargetImpl>()
-//        ).build()
-//        val validator = TypeMapValidator(typeMap)
-//
-//        assertAll({ validator.validate() })
-//    }
-//
-//    @Test
-//    fun `throws where Source is not subclass of`() {
-//
-//        data class SourceImpl(val id: String)
-//        data class TargetImpl(val id: Int) : Target
-//
-//        val typeMap = typeMap<Source, Target>(
-//            typeMap<SourceImpl, TargetImpl>()
-//        ).build()
-//        val validator = TypeMapValidator(typeMap)
-//
-//        assertThrows<InvalidConfigException> { validator.validate() }
-//    }
-//
-//    @Test
-//    fun `throws where Target is not a subclass of`() {
-//
-//        data class SourceImpl(val id: String) : Source
-//        data class TargetImpl(val id: Int)
-//
-//        val typeMap = typeMap<Source, Target>(
-//            typeMap<SourceImpl, TargetImpl>()
-//        ).build()
-//        val validator = TypeMapValidator(typeMap)
-//
-//        assertThrows<InvalidConfigException> { validator.validate() }
-//    }
 }

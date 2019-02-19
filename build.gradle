@@ -26,8 +26,8 @@ dependencies {
 }
 
 allprojects {
-    version = '0.0.2'
-    group = 'com.github.zerocode'
+    version = VERSION_NAME
+    group = GROUP
 
     repositories {
         mavenCentral()
@@ -107,5 +107,5 @@ javadoc {
 }
 
 def isReleaseBuild() {
-    return version.contains("SNAPSHOT") == false
+    return version.contains("SNAPSHOT") == true
 }

@@ -78,8 +78,4 @@ class TypeMapValidator(private val typeMap: TypeMap) {
 
     private val invalidConfigMessage =
         "${typeMap.sourceClass.simpleName} cannot be mapped to ${typeMap.targetClass.simpleName}"
-
-//    fun hasCompatibleTypes(): Boolean {
-//        return targetProperty.returnTypeClass.isSuperclassOf(sourceProperty.returnTypeClass) || conversion != null
-//    }
 }

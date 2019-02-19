@@ -6,10 +6,8 @@ import com.github.zerocode.map4k.configuration.options
 import com.github.zerocode.map4k.configuration.typeMap
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
-@Tag("vnext2")
 class CanMapAbstractTypesTest {
 
     interface Source {
@@ -29,7 +27,7 @@ class CanMapAbstractTypesTest {
 
     @Test
     fun `can map abstract types`() {
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<SourceImplB, TargetImplA>()
             )
@@ -45,7 +43,7 @@ class CanMapAbstractTypesTest {
         data class ParentSource(val inner: Source)
         data class ParentTarget(val inner: Source)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<ParentSource, ParentTarget>(),
                 options = options(identityTypeMapping = Enabled)
@@ -62,7 +60,7 @@ class CanMapAbstractTypesTest {
         data class ParentSource(val inner: Source)
         data class ParentTarget(val inner: Target)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<ParentSource, ParentTarget>(),
                 typeMap<SourceImplB, TargetImplA>()
@@ -80,7 +78,7 @@ class CanMapAbstractTypesTest {
         data class ParentSource(val inner: List<Source>)
         data class ParentTarget(val inner: List<Target>)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<ParentSource, ParentTarget>(),
                 typeMap<SourceImplA, TargetImplC>()

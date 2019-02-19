@@ -8,19 +8,16 @@ import com.github.zerocode.map4k.configuration.typeConverters
 import com.github.zerocode.map4k.configuration.typeMap
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-@Tag("vnext2")
 class MapperTest {
 
     @Test
     fun `can map to the same type`() {
         data class Source(val id: Int)
 
-        val mapper = MapperV3(config(options = options(identityTypeMapping = Enabled)))
+        val mapper = Mapper(config(options = options(identityTypeMapping = Enabled)))
         val actual = mapper.map<Source>(Source(1234))
         val expected = Source(1234)
 
@@ -32,7 +29,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val id: Int)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>()))
+        val mapper = Mapper(config(typeMap<Source, Target>()))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target(1234)
 
@@ -44,7 +41,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val otherId: Int)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>().propertyMap(Source::id, Target::otherId)))
+        val mapper = Mapper(config(typeMap<Source, Target>().propertyMap(Source::id, Target::otherId)))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target(1234)
 
@@ -56,7 +53,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val id: String)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString)))
+        val mapper = Mapper(config(typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString)))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target("1234")
 
@@ -68,7 +65,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val id: String)
 
-        val mapper = MapperV3(config(
+        val mapper = Mapper(config(
             typeMap<Source, Target>().propertyMap(Source::id, Target::id),
             typeConversions = typeConverters(
                 typeConverter<Int, String> { it.toString() }
@@ -85,7 +82,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val otherId: String)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>().propertyMap(Source::id, Target::otherId, Int::toString)))
+        val mapper = Mapper(config(typeMap<Source, Target>().propertyMap(Source::id, Target::otherId, Int::toString)))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target("1234")
 
@@ -97,7 +94,7 @@ class MapperTest {
         data class Source(val id: String)
         data class Target(val id: String, val amount: Double = 105.7)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>()))
+        val mapper = Mapper(config(typeMap<Source, Target>()))
         val actual = mapper.map<Target>(Source("some_id"))
         val expected = Target("some_id")
 
@@ -109,7 +106,7 @@ class MapperTest {
         data class Source(val id: Int?)
         data class Target(val id: Int?)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>()))
+        val mapper = Mapper(config(typeMap<Source, Target>()))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target(1234)
 
@@ -121,7 +118,7 @@ class MapperTest {
         data class Source(val id: Int?)
         data class Target(val id: Int?)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>()))
+        val mapper = Mapper(config(typeMap<Source, Target>()))
         val actual = mapper.map<Target>(Source(null))
         val expected = Target(null)
 
@@ -133,7 +130,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val id: String?)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString)))
+        val mapper = Mapper(config(typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString)))
         val actual = mapper.map<Target>(Source(1234))
         val expected = Target("1234")
 
@@ -145,7 +142,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val otherId: String)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>()
                     .propertyMap<Source, Target, String>(Target::otherId, { it.id.toString() + "5678" })
@@ -164,7 +161,7 @@ class MapperTest {
         data class TargetChild(val id: Int)
         data class Target(val child: TargetChild)
 
-        val mapper = MapperV3(config(typeMap<Source, Target>(), typeMap<SourceChild, TargetChild>()))
+        val mapper = Mapper(config(typeMap<Source, Target>(), typeMap<SourceChild, TargetChild>()))
         val actual = mapper.map<Target>(Source(SourceChild(1234)))
         val expected = Target(TargetChild(1234))
 
@@ -178,7 +175,7 @@ class MapperTest {
         data class TargetChild(val otherId: String)
         data class Target(val child: TargetChild)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>(),
                 typeMap<SourceChild, TargetChild>()
@@ -198,7 +195,7 @@ class MapperTest {
         data class TargetChild(val otherId: String)
         data class Target(val otherChild: TargetChild)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>()
                     .propertyMap(Source::child, Target::otherChild),
@@ -217,7 +214,7 @@ class MapperTest {
         data class Source(val ids: List<Int>)
         data class Target(val ids: List<Int>)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>()
             )
@@ -235,7 +232,7 @@ class MapperTest {
         data class TargetChild(val ids: List<Int>)
         data class Target(val child: TargetChild)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>(),
                 typeMap<SourceChild, TargetChild>()
@@ -254,7 +251,7 @@ class MapperTest {
         data class TargetChild(val targetIds: List<String>)
         data class Target(val child: TargetChild)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>(),
                 typeMap<SourceChild, TargetChild>()
@@ -278,7 +275,7 @@ class MapperTest {
         data class TargetChild(val id: Int)
         data class Target(val child: TargetChild?)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<Source, Target>()
             )
@@ -294,7 +291,7 @@ class MapperTest {
         data class Source(val id: Int)
         data class Target(val id: Int)
 
-        val mapper = MapperV3(config())
+        val mapper = Mapper(config())
 
         assertThrows<MappingException> {
             mapper.map<Target>(Source(1234))

@@ -6,10 +6,8 @@ import com.github.zerocode.map4k.configuration.typeConverters
 import com.github.zerocode.map4k.configuration.typeMap
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
-@Tag("vnext2")
 class CanMapListsTest {
 
     data class SourceChild(val id: Int)
@@ -32,7 +30,7 @@ class CanMapListsTest {
 
     @Test
     fun `can map a nested list of data classes`() {
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<SourceParent, TargetParent>(),
                 typeMap<SourceChild, TargetChild>()
@@ -52,7 +50,7 @@ class CanMapListsTest {
         val source = SourceItems()
         val expected = TargetItems(items = listOf(listOf("1", "2")))
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<SourceItems, TargetItems>(),
                 typeConversions = typeConverters(
@@ -77,7 +75,7 @@ class CanMapListsTest {
                 TargetImplA(id = 1234, name = "don pablo")
             )))
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<SourceItems, TargetItems>(),
                 typeMap<SourceImplA, TargetImplC>()
@@ -95,7 +93,7 @@ class CanMapListsTest {
         data class SourceItems(val items: List<List<Source>> = listOf(listOf(SourceImplA(), SourceImplB())))
         data class TargetItems(val items: List<ArrayList<Target>>)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeMap<SourceItems, TargetItems>(),
                 typeMap<SourceImplA, TargetImplC>()
@@ -118,7 +116,7 @@ class CanMapListsTest {
     fun `can map a list of primitive types with a conversion`() {
         val source = listOf(1, 2, 3)
 
-        val mapper = MapperV3(
+        val mapper = Mapper(
             config(
                 typeConversions = typeConverters(
                     typeConverter<Int, String> { it.toString() }
