@@ -57,7 +57,7 @@ class MapConfig(
 
     private fun dynamicTypeMap(sourceClass: KClass<*>, targetClass: KClass<*>): TypeMap? =
         when (options.dynamicTypeMapping) {
-            is Enabled -> TODO()
+            is Enabled -> TypeMapBuilder(sourceClass, targetClass).build()
             is Disabled -> null
         }
 

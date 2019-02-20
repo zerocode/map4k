@@ -287,6 +287,24 @@ class MapperTest {
     }
 
     @Test
+    fun `can map using dynamic type map`() {
+        data class SourceChild(val id: Int)
+        data class Source(val child: SourceChild?)
+        data class TargetChild(val id: Int)
+        data class Target(val child: TargetChild?)
+
+        val mapper = Mapper(
+            config(
+                options = options(dynamicTypeMapping = Enabled)
+            )
+        )
+        val actual = mapper.map<Target>(Source(SourceChild(1234)))
+        val expected = Target(TargetChild(1234))
+
+        assertThat(actual, equalTo(expected))
+    }
+
+    @Test
     fun `throws where no type map found`() {
         data class Source(val id: Int)
         data class Target(val id: Int)
