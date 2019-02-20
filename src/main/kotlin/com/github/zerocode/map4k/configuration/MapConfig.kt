@@ -24,7 +24,7 @@ data class TypeMap(
                         targetProperty = targetProperty,
                         targetParameter = targetClass.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                         sourceResolution = NamedSourceResolution(sourceProperty),
-                        conversion = TypeConversions.IDENTITY_CONVERSION // TODO - should look up global conversions
+                        conversion = TypeConversions.identityConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
                     )
                 }
             } + customPropertyMaps
@@ -134,7 +134,7 @@ data class TypeMapBuilder(
                 targetProperty = targetProperty,
                 targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                 sourceResolution = NamedSourceResolution(sourceProperty),
-                conversion = TypeConversions.IDENTITY_CONVERSION
+                conversion = TypeConversions.identityConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
             ))
     }
 
@@ -150,7 +150,7 @@ data class TypeMapBuilder(
                 sourceResolution = ConvertedSourceResolution(
                     sourceProperty = sourceProperty
                 ),
-                conversion = converter as Function1<Any?, *>
+                conversion = SimpleTypeConverter(TSourceReturn::class, TTargetReturn::class, converter as (Any) -> Any)
             ))
     }
 
@@ -163,7 +163,7 @@ data class TypeMapBuilder(
                 targetProperty = targetProperty,
                 targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                 sourceResolution = GeneratedSourceResolution(generator = generator as Function1<Any?, *>),
-                conversion = TypeConversions.IDENTITY_CONVERSION
+                conversion = TypeConversions.identityConverter(TSource::class, targetProperty.returnTypeClass)
             ))
     }
 
@@ -177,7 +177,7 @@ data class TypeMapBuilder(
                 is NamedSourceResolution -> {
                     val converter = typeConversions.getConverter(it.sourceResolution.sourceProperty.returnTypeClass, it.targetPropertyClass)
                     if (converter != null) {
-                        it.copy(conversion = converter as Function1<Any?, *>)
+                        it.copy(conversion = converter)
                     } else {
                         it
                     }

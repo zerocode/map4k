@@ -68,7 +68,7 @@ class MapperTest {
         val mapper = Mapper(config(
             typeMap<Source, Target>().propertyMap(Source::id, Target::id),
             typeConversions = typeConverters(
-                typeConverter<Int, String> { it.toString() }
+                typeConverter<Int, String> { value -> value.toString() }
             )
         ))
         val actual = mapper.map<Target>(Source(1234))

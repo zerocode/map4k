@@ -34,13 +34,16 @@ class Mapper(private val config: MapConfig) {
     }
 
     private fun resolvePropertyValue(source: Any?, propertyMap: PropertyMap): Any? {
+        if (source == null) {
+            return null
+        }
         val targetDescriptor = TypeDescriptor.resolve(propertyMap.targetPropertyClass, propertyMap.targetPropertyType)
         val resolvedValue = when (targetDescriptor) {
             is PrimitiveDescriptor -> source
-            is DataClassDescriptor, is AbstractDescriptor -> source?.let { mapInternal(it, targetDescriptor.kClass) }
-            is ListDescriptor -> source?.let { resolveValue(it, targetDescriptor) }
+            is DataClassDescriptor, is AbstractDescriptor -> mapInternal(source, targetDescriptor.kClass)
+            is ListDescriptor -> resolveValue(source, targetDescriptor)
         }
-        return propertyMap.conversion(resolvedValue)
+        return propertyMap.conversion.convert(resolvedValue, targetDescriptor.kClass)
     }
 
     private fun resolveValue(source: Any, targetDescriptor: TypeDescriptor): Any {
@@ -50,7 +53,7 @@ class Mapper(private val config: MapConfig) {
             is DataClassDescriptor, is AbstractDescriptor -> mapInternal(source, targetDescriptor.kClass)
             is ListDescriptor -> (source as List<*>).map { resolveValue(it!!, targetDescriptor.typeParameter) }
         }
-        return conversion?.invoke(resolvedValue) ?: resolvedValue
+        return conversion?.convert(resolvedValue, targetDescriptor.kClass) ?: resolvedValue
     }
 }
 

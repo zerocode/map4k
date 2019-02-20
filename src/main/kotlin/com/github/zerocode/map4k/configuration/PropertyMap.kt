@@ -1,5 +1,6 @@
 package com.github.zerocode.map4k.configuration
 
+import com.github.zerocode.map4k.configuration.TypeConversions.Companion.identityConverter
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -9,7 +10,7 @@ data class PropertyMap(
     val targetProperty: KProperty1<*, *>,
     val targetParameter: KParameter,
     val sourceResolution: SourceResolution,
-    val conversion: Function1<Any?, *>
+    val conversion: TypeConverter
 ) {
     val targetPropertyName = targetProperty.name
     val targetPropertyClass = targetProperty.returnTypeClass
@@ -57,7 +58,7 @@ inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget 
         targetProperty = targetProperty,
         targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
         sourceResolution = NamedSourceResolution(sourceProperty = sourceProperty),
-        conversion = TypeConversions.IDENTITY_CONVERSION
+        conversion = identityConverter(TSourceReturn::class, TTargetReturn::class)
     )
 }
 
@@ -72,7 +73,8 @@ inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget 
         sourceResolution = ConvertedSourceResolution(
             sourceProperty = sourceProperty
         ),
-        conversion = converter as Function1<Any?, *>
+        conversion = SimpleTypeConverter(TSourceReturn::class, TTargetReturn::class, converter as (Any) -> Any)
+
     )
 }
 
@@ -84,6 +86,6 @@ inline fun <reified TSource : Any, reified TTarget : Any, reified TTargetReturn>
         targetProperty = targetProperty,
         targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
         sourceResolution = GeneratedSourceResolution(generator = customValueResolver as Function1<Any?, *>),
-        conversion = TypeConversions.IDENTITY_CONVERSION
+        conversion = identityConverter(TSource::class, TTargetReturn::class)
     )
 }
