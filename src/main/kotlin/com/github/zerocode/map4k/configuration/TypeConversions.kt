@@ -13,6 +13,13 @@ interface TypeConverter {
     fun convert(source: Any, targetClass: KClass<*>): Any
 }
 
+data class NoopTypeConverter(
+    override val sourceBaseClass: KClass<*>,
+    override val targetBaseClass: KClass<*>
+) : TypeConverter {
+    override fun convert(source: Any, targetClass: KClass<*>): Any = source
+}
+
 data class SimpleTypeConverter(
     override val sourceBaseClass: KClass<*>,
     override val targetBaseClass: KClass<*>,
@@ -37,8 +44,8 @@ data class TypeConversions(val typeConverters: List<TypeConverter> = emptyList()
         typeConverters.firstOrNull { it.canConvert(sourceClass, targetClass) }
 
     companion object {
-        fun identityConverter(sourceClass: KClass<*>, targetClass: KClass<*>): TypeConverter =
-            SimpleTypeConverter(sourceClass, targetClass) { x -> x }
+        fun noopConverter(sourceClass: KClass<*>, targetClass: KClass<*>): TypeConverter =
+            NoopTypeConverter(sourceClass, targetClass)
     }
 }
 

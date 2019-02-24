@@ -4,29 +4,12 @@ import com.github.zerocode.map4k.configuration.InvalidConfigException
 import com.github.zerocode.map4k.configuration.TypeMap
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.isSubclassOf
 
 class TypeMapValidator(private val typeMap: TypeMap) {
 
     fun validate() {
         typeMap.targetClass.declaredMemberProperties.forEach {
             assertHasValidSource(it)
-        }
-
-//        typeMap.subTypeMaps.forEach {
-//            assertSubTypeRelationships(it)
-//        }
-    }
-
-    private fun assertSubTypeRelationships(subTypeMap: TypeMap) {
-        if(!subTypeMap.sourceClass.isSubclassOf(typeMap.sourceClass)) {
-            throw InvalidConfigException(
-                "$invalidConfigMessage. Sub type source '${subTypeMap.sourceClass.simpleName}' is not a sub type of ${typeMap.sourceClass}.")
-        }
-
-        if(!subTypeMap.targetClass.isSubclassOf(typeMap.targetClass)) {
-            throw InvalidConfigException(
-                "$invalidConfigMessage. Target '${subTypeMap.targetClass.simpleName}' is not a sub type of ${typeMap.targetClass}.")
         }
     }
 

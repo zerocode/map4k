@@ -287,6 +287,26 @@ class MapperTest {
     }
 
     @Test
+    fun `can map nested data class to primitive using conversion`() {
+        data class SourceChild(val id: Int)
+        data class Source(val child: SourceChild)
+        data class Target(val child: Int)
+
+        val mapper = Mapper(
+            config(
+                typeMap<Source, Target>(),
+                typeConversions = typeConverters(
+                    typeConverter<SourceChild, Int> { sourceChild -> sourceChild.id }
+                )
+            )
+        )
+        val actual = mapper.map<Target>(Source(SourceChild(1234)))
+        val expected = Target(1234)
+
+        assertThat(actual, equalTo(expected))
+    }
+
+    @Test
     fun `can map using dynamic type map`() {
         data class SourceChild(val id: Int)
         data class Source(val child: SourceChild?)

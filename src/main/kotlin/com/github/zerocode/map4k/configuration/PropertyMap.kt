@@ -1,6 +1,6 @@
 package com.github.zerocode.map4k.configuration
 
-import com.github.zerocode.map4k.configuration.TypeConversions.Companion.identityConverter
+import com.github.zerocode.map4k.configuration.TypeConversions.Companion.noopConverter
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -58,7 +58,7 @@ inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget 
         targetProperty = targetProperty,
         targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
         sourceResolution = NamedSourceResolution(sourceProperty = sourceProperty),
-        conversion = identityConverter(TSourceReturn::class, TTargetReturn::class)
+        conversion = noopConverter(TSourceReturn::class, TTargetReturn::class)
     )
 }
 
@@ -86,6 +86,6 @@ inline fun <reified TSource : Any, reified TTarget : Any, reified TTargetReturn>
         targetProperty = targetProperty,
         targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
         sourceResolution = GeneratedSourceResolution(generator = customValueResolver as Function1<Any?, *>),
-        conversion = identityConverter(TSource::class, TTargetReturn::class)
+        conversion = noopConverter(TSource::class, TTargetReturn::class)
     )
 }

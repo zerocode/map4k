@@ -12,24 +12,8 @@ import kotlin.reflect.full.primaryConstructor
 data class TypeMap(
     val sourceClass: KClass<*>,
     val targetClass: KClass<*>,
-    val customPropertyMaps: Collection<PropertyMap> = emptyList()
+    val propertyMaps: Collection<PropertyMap> = emptyList()
 ) {
-
-    val propertyMaps: Collection<PropertyMap> by lazy {
-        targetClass.declaredMemberProperties
-            .filterNot { customPropertyMaps.map { it.targetPropertyName }.contains(it.name) }
-            .mapNotNull { targetProperty ->
-                sourceClass.declaredMemberProperties.firstOrNull { it.name == targetProperty.name }?.let { sourceProperty ->
-                    PropertyMap(
-                        targetProperty = targetProperty,
-                        targetParameter = targetClass.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
-                        sourceResolution = NamedSourceResolution(sourceProperty),
-                        conversion = TypeConversions.identityConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
-                    )
-                }
-            } + customPropertyMaps
-    }
-
     val targetParameters: Collection<KParameter> =
         targetClass.primaryConstructor?.parameters ?: emptyList()
 
@@ -44,7 +28,7 @@ data class TypeMap(
 class MapConfig(
     val typeMaps: Collection<TypeMap>,
     val typeConversions: TypeConversions = TypeConversions(),
-    val options: MapConfigOptions = MapConfigOptions()
+    private val options: MapConfigOptions = MapConfigOptions()
 ) {
 
     fun typeMapFor(sourceClass: KClass<*>, targetClass: KClass<*>): TypeMap? =
@@ -63,7 +47,7 @@ class MapConfig(
 
     private fun identityTypeMap(sourceClass: KClass<*>, targetClass: KClass<*>): TypeMap? =
         when (options.identityTypeMapping) {
-            is Enabled -> if (areSameOrRelatedTypes(sourceClass, targetClass)) TypeMap(sourceClass, sourceClass) else null
+            is Enabled -> if (areSameOrRelatedTypes(sourceClass, targetClass)) TypeMapBuilder(sourceClass, sourceClass).build() else null
             is Disabled -> null
         }
 
@@ -122,19 +106,18 @@ data class ListDescriptor(override val kClass: KClass<out Any>, val typeParamete
 data class TypeMapBuilder(
     val sourceClass: KClass<*>,
     val targetClass: KClass<*>,
-    val subTypeMapBuilders: List<TypeMapBuilder> = emptyList(),
-    val propertyMaps: List<PropertyMap> = emptyList()
+    val userDefinedPropertyMaps: List<PropertyMap> = emptyList()
 ) {
     inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget : Any, reified TTargetReturn> propertyMap(
         sourceProperty: KProperty1<TSource, TSourceReturn>,
         targetProperty: KProperty1<TTarget, TTargetReturn>
     ): TypeMapBuilder {
         return this.copy(
-            propertyMaps = this.propertyMaps + PropertyMap(
+            userDefinedPropertyMaps = this.userDefinedPropertyMaps + PropertyMap(
                 targetProperty = targetProperty,
                 targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                 sourceResolution = NamedSourceResolution(sourceProperty),
-                conversion = TypeConversions.identityConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
+                conversion = TypeConversions.noopConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
             ))
     }
 
@@ -144,7 +127,7 @@ data class TypeMapBuilder(
         noinline converter: Function1<TSourceReturn, TTargetReturn>
     ): TypeMapBuilder {
         return this.copy(
-            propertyMaps = this.propertyMaps + PropertyMap(
+            userDefinedPropertyMaps = this.userDefinedPropertyMaps + PropertyMap(
                 targetProperty = targetProperty,
                 targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                 sourceResolution = ConvertedSourceResolution(
@@ -159,11 +142,11 @@ data class TypeMapBuilder(
         noinline generator: Function1<TSource, TTargetReturn>
     ): TypeMapBuilder {
         return this.copy(
-            propertyMaps = this.propertyMaps + PropertyMap(
+            userDefinedPropertyMaps = this.userDefinedPropertyMaps + PropertyMap(
                 targetProperty = targetProperty,
                 targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
                 sourceResolution = GeneratedSourceResolution(generator = generator as Function1<Any?, *>),
-                conversion = TypeConversions.identityConverter(TSource::class, targetProperty.returnTypeClass)
+                conversion = TypeConversions.noopConverter(TSource::class, targetProperty.returnTypeClass)
             ))
     }
 
@@ -172,7 +155,28 @@ data class TypeMapBuilder(
         typeConversions: TypeConversions = TypeConversions(),
         options: MapConfigOptions = MapConfigOptions()
     ): TypeMap {
-        val propertyMapsWithConversions = propertyMaps.map {
+        val generatedPropertyMaps = autoGeneratedPropertyMaps()
+        val propertyMapsWithTypeConversions = addGlobalTypeConversionsToPropertyMaps(typeConversions, generatedPropertyMaps)
+        return TypeMap(sourceClass, targetClass, propertyMapsWithTypeConversions)
+    }
+
+    private fun autoGeneratedPropertyMaps(): Collection<PropertyMap> {
+        return targetClass.declaredMemberProperties
+            .filterNot { userDefinedPropertyMaps.map { it.targetPropertyName }.contains(it.name) }
+            .mapNotNull { targetProperty ->
+                sourceClass.declaredMemberProperties.firstOrNull { it.name == targetProperty.name }?.let { sourceProperty ->
+                    PropertyMap(
+                        targetProperty = targetProperty,
+                        targetParameter = targetClass.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
+                        sourceResolution = NamedSourceResolution(sourceProperty),
+                        conversion = TypeConversions.noopConverter(sourceProperty.returnTypeClass, targetProperty.returnTypeClass)
+                    )
+                }
+            } + userDefinedPropertyMaps
+    }
+
+    private fun addGlobalTypeConversionsToPropertyMaps(typeConversions: TypeConversions, propertyMaps: Collection<PropertyMap>): List<PropertyMap> {
+        return propertyMaps.map {
             when (it.sourceResolution) {
                 is NamedSourceResolution -> {
                     val converter = typeConversions.getConverter(it.sourceResolution.sourceProperty.returnTypeClass, it.targetPropertyClass)
@@ -185,7 +189,6 @@ data class TypeMapBuilder(
                 else -> it
             }
         }
-        return TypeMap(sourceClass, targetClass, propertyMapsWithConversions)
     }
 }
 

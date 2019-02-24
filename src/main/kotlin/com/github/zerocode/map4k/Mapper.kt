@@ -7,8 +7,10 @@ import com.github.zerocode.map4k.configuration.MapConfig
 import com.github.zerocode.map4k.configuration.PrimitiveDescriptor
 import com.github.zerocode.map4k.configuration.PropertyMap
 import com.github.zerocode.map4k.configuration.TypeDescriptor
+import com.github.zerocode.map4k.configuration.TypeMap
 import com.github.zerocode.map4k.validation.MapConfigValidator
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 
 class Mapper(private val config: MapConfig) {
 
@@ -26,11 +28,26 @@ class Mapper(private val config: MapConfig) {
 
     private fun mapInternal(source: Any, targetClass: KClass<*>): Any {
         val sourceClass = source::class
-        val typeMap = config.typeMapFor(sourceClass, targetClass)
-                      ?: throw MappingException("No TypeMap found for ${sourceClass.simpleName} and ${targetClass.simpleName}.")
-
+        val typeMap = typeMapFor(sourceClass, targetClass)
         val parameterValues = typeMap.propertyMaps.map { it.targetParameter to resolvePropertyValue(it.sourceResolution.resolveValue(source), it) }.toMap()
-        return typeMap.createTargetWith(parameterValues)
+        return createTarget(typeMap, parameterValues, source, targetClass)
+    }
+
+    private fun createTarget(typeMap: TypeMap, parameterValues: Map<KParameter, Any?>, source: Any, targetClass: KClass<*>): Any {
+        try {
+            return typeMap.createTargetWith(parameterValues)
+        } catch (ex: Exception) {
+            throw MappingException("Source: $source. " + System.lineSeparator() +
+                                   "Target: $targetClass. " + System.lineSeparator() +
+                                   "ParameterValues: $parameterValues." + System.lineSeparator() +
+                                   "Exception: $ex."
+            )
+        }
+    }
+
+    private fun typeMapFor(sourceClass: KClass<out Any>, targetClass: KClass<*>): TypeMap {
+        return config.typeMapFor(sourceClass, targetClass)
+               ?: throw MappingException("No TypeMap found for ${sourceClass.simpleName} and ${targetClass.simpleName}.")
     }
 
     private fun resolvePropertyValue(source: Any?, propertyMap: PropertyMap): Any? {
