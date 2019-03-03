@@ -1,9 +1,9 @@
 package com.github.zerocode.map4k.validation
 
-import com.github.zerocode.map4k.configuration.MapConfig
+import com.github.zerocode.map4k.configuration.MappingConfig
 import com.github.zerocode.map4k.configuration.TypeMap
 
-class MapConfigValidator(private val config: MapConfig) {
+class MapConfigValidator(private val config: MappingConfig) {
 
     fun validate() {
         assertNoDuplicates()
@@ -17,7 +17,7 @@ class MapConfigValidator(private val config: MapConfig) {
     }
 
     private fun validate(typeMap: TypeMap) =
-        TypeMapValidator(typeMap).validate()
+        TypeMapValidator(typeMap, config).validate()
 }
 
 class DuplicateTypeMapException(message: String) : Exception(message)

@@ -3,6 +3,7 @@ package com.github.zerocode.map4k.configuration
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.jupiter.api.Test
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
 
 class TypeMapBuilderTest {
@@ -18,7 +19,7 @@ class TypeMapBuilderTest {
             targetProperty = Target::id,
             targetParameter = Target::class.primaryConstructor!!.parameters.first(),
             sourceResolution = NamedSourceResolution(Source::id),
-            conversion = TypeConversions.noopConverter(Int::class, Int::class)
+            conversion = TypeConversions.noopConverter(Int::class, Int::class.createType(), Int::class)
         )) as Collection<PropertyMap>
 
         assertThat(actual, equalTo(expected))
@@ -32,7 +33,7 @@ class TypeMapBuilderTest {
         val converter = { x: Any -> x.toString() }
         val config = config(
             typeMap<Source, Target>(),
-            typeConversions = typeConverters(
+            userDefinedTypeConversions = typeConverters(
                 typeConverter<Int, String>(converter)
             )
         )

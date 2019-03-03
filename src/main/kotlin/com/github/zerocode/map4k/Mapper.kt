@@ -1,21 +1,16 @@
 package com.github.zerocode.map4k
 
-import com.github.zerocode.map4k.configuration.AbstractDescriptor
-import com.github.zerocode.map4k.configuration.DataClassDescriptor
-import com.github.zerocode.map4k.configuration.ListDescriptor
-import com.github.zerocode.map4k.configuration.MapConfig
-import com.github.zerocode.map4k.configuration.PrimitiveDescriptor
+import com.github.zerocode.map4k.configuration.MappingConfig
 import com.github.zerocode.map4k.configuration.PropertyMap
-import com.github.zerocode.map4k.configuration.TypeDescriptor
 import com.github.zerocode.map4k.configuration.TypeMap
 import com.github.zerocode.map4k.validation.MapConfigValidator
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 
-class Mapper(private val config: MapConfig) {
+class Mapper(private val mappingConfig: MappingConfig) {
 
     init {
-        MapConfigValidator(config).validate()
+        MapConfigValidator(mappingConfig).validate()
     }
 
     inline fun <reified TTarget : Any> map(source: Any): TTarget =
@@ -45,8 +40,8 @@ class Mapper(private val config: MapConfig) {
         }
     }
 
-    private fun typeMapFor(sourceClass: KClass<out Any>, targetClass: KClass<*>): TypeMap {
-        return config.typeMapFor(sourceClass, targetClass)
+    private fun typeMapFor(sourceClass: KClass<*>, targetClass: KClass<*>): TypeMap {
+        return mappingConfig.typeMapFor(sourceClass, targetClass)
                ?: throw MappingException("No TypeMap found for ${sourceClass.simpleName} and ${targetClass.simpleName}.")
     }
 
@@ -54,23 +49,34 @@ class Mapper(private val config: MapConfig) {
         if (source == null) {
             return null
         }
-        val targetDescriptor = TypeDescriptor.resolve(propertyMap.targetPropertyClass, propertyMap.targetPropertyType)
-        val resolvedValue = when (targetDescriptor) {
-            is PrimitiveDescriptor -> source
-            is DataClassDescriptor, is AbstractDescriptor -> mapInternal(source, targetDescriptor.kClass)
-            is ListDescriptor -> resolveValue(source, targetDescriptor)
-        }
-        return propertyMap.conversion.convert(resolvedValue, targetDescriptor.kClass)
+        val resolvedValue = when (propertyMap.targetDescriptor) {
+                                is PrimitiveDescriptor -> source
+                                is ObjectDescriptor -> propertyMap.targetDescriptor.instance
+                                is DataClassDescriptor, is AbstractDescriptor -> mapInternal(source, propertyMap.targetDescriptor.kClass)
+                                is ListDescriptor, is MapDescriptor, is ArrayDescriptor -> resolveValue(source, propertyMap.targetDescriptor)
+                            } ?: return null
+        return propertyMap.conversion.convert(resolvedValue, propertyMap.targetDescriptor.kClass)
     }
 
-    private fun resolveValue(source: Any, targetDescriptor: TypeDescriptor): Any {
-        val conversion = config.typeConversions.getConverter(source::class, targetDescriptor.kClass)
+    private fun resolveValue(source: Any?, targetDescriptor: TypeDescriptor): Any? {
+        if (source == null) {
+            return null
+        }
+        val conversion = mappingConfig.converterFor(source::class, targetDescriptor.kClass)
         val resolvedValue = when (targetDescriptor) {
             is PrimitiveDescriptor -> source
-            is DataClassDescriptor, is AbstractDescriptor -> mapInternal(source, targetDescriptor.kClass)
-            is ListDescriptor -> (source as List<*>).map { resolveValue(it!!, targetDescriptor.typeParameter) }
-        }
+            is ObjectDescriptor -> targetDescriptor.instance
+            is DataClassDescriptor -> mapInternal(source, targetDescriptor.kClass)
+            is AbstractDescriptor -> mapInternal(source, resolveConcreteType(source::class, targetDescriptor.kClass))
+            is ListDescriptor -> (source as List<*>).map { resolveValue(it, targetDescriptor.typeParameter) }
+            is MapDescriptor -> (source as Map<*, *>).map { it.key to resolveValue(it.value, targetDescriptor.typeParameter) }.toMap()
+            is ArrayDescriptor -> TODO()
+        } ?: return null
         return conversion?.convert(resolvedValue, targetDescriptor.kClass) ?: resolvedValue
+    }
+
+    private fun resolveConcreteType(sourceClass: KClass<*>, targetClass: KClass<*>): KClass<*> {
+        return targetClass
     }
 }
 

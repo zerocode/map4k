@@ -5,7 +5,7 @@ import com.github.zerocode.map4k.configuration.typeMap
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class MapConfigValidatorTest {
+class MappingConfigValidatorTest {
 
     @Test
     fun `throws where config contains duplicate type maps`() {

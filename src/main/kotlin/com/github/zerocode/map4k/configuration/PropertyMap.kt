@@ -1,10 +1,13 @@
 package com.github.zerocode.map4k.configuration
 
-import com.github.zerocode.map4k.configuration.TypeConversions.Companion.noopConverter
+import com.github.zerocode.map4k.TypeDescriptor
+import com.github.zerocode.map4k.extensions.returnTypeClass
+import com.github.zerocode.map4k.typeDescriptor
+import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
-import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.reflect
 
 data class PropertyMap(
     val targetProperty: KProperty1<*, *>,
@@ -14,7 +17,7 @@ data class PropertyMap(
 ) {
     val targetPropertyName = targetProperty.name
     val targetPropertyClass = targetProperty.returnTypeClass
-    val targetPropertyType = targetProperty.returnType
+    val targetDescriptor = typeDescriptor(targetPropertyClass, targetProperty.returnType)
 }
 
 interface SourceType {
@@ -22,70 +25,39 @@ interface SourceType {
 }
 
 sealed class SourceResolution {
+    abstract val sourceDescriptor: TypeDescriptor
     abstract fun resolveValue(source: Any): Any?
 }
 
-data class NamedSourceResolution(
-    val sourceProperty: KProperty1<*, *>
-) : SourceResolution(), SourceType {
-    override val sourceType: KType = sourceProperty.returnType
+data class NamedSourceResolution(val sourceProperty: KProperty1<*, *>) : SourceResolution(), SourceType {
+
+    override val sourceDescriptor: TypeDescriptor =
+        typeDescriptor(sourceProperty.returnTypeClass, sourceProperty.returnType)
+
+    override val sourceType: KType =
+        sourceProperty.returnType
 
     override fun resolveValue(source: Any): Any? =
         sourceProperty.getter.call(source)
 }
 
-data class ConvertedSourceResolution(
-    val sourceProperty: KProperty1<*, *>
-) : SourceResolution(), SourceType {
-    override val sourceType: KType = sourceProperty.returnType
+data class ConvertedSourceResolution(val sourceProperty: KProperty1<*, *>) : SourceResolution(), SourceType {
+
+    override val sourceDescriptor: TypeDescriptor =
+        typeDescriptor(sourceProperty.returnTypeClass, sourceProperty.returnType)
+
+    override val sourceType: KType =
+        sourceProperty.returnType
 
     override fun resolveValue(source: Any): Any? =
         sourceProperty.getter.call(source)
 }
 
-data class GeneratedSourceResolution(
-    val generator: Function1<Any?, *>
-) : SourceResolution() {
+data class GeneratedSourceResolution(val generator: Function1<Any?, *>) : SourceResolution() {
+
+    override val sourceDescriptor: TypeDescriptor =
+        typeDescriptor(generator.reflect()!!.returnType.classifier as KClass<*>, generator.reflect()!!.returnType)
+
     override fun resolveValue(source: Any): Any? =
         generator(source)
-}
-
-inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget : Any, reified TTargetReturn> namedPropertyMap(
-    sourceProperty: KProperty1<TSource, TSourceReturn>,
-    targetProperty: KProperty1<TTarget, TTargetReturn>
-): PropertyMap {
-    return PropertyMap(
-        targetProperty = targetProperty,
-        targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
-        sourceResolution = NamedSourceResolution(sourceProperty = sourceProperty),
-        conversion = noopConverter(TSourceReturn::class, TTargetReturn::class)
-    )
-}
-
-inline fun <reified TSource : Any, reified TSourceReturn : Any, reified TTarget : Any, reified TTargetReturn> convertedPropertyMap(
-    sourceProperty: KProperty1<TSource, TSourceReturn>,
-    targetProperty: KProperty1<TTarget, TTargetReturn>,
-    noinline converter: Function1<TSourceReturn, TTargetReturn>
-): PropertyMap {
-    return PropertyMap(
-        targetProperty = targetProperty,
-        targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
-        sourceResolution = ConvertedSourceResolution(
-            sourceProperty = sourceProperty
-        ),
-        conversion = SimpleTypeConverter(TSourceReturn::class, TTargetReturn::class, converter as (Any) -> Any)
-
-    )
-}
-
-inline fun <reified TSource : Any, reified TTarget : Any, reified TTargetReturn> generatedPropertyMap(
-    targetProperty: KProperty1<TTarget, TTargetReturn>,
-    noinline customValueResolver: Function1<TSource, TTargetReturn>
-): PropertyMap {
-    return PropertyMap(
-        targetProperty = targetProperty,
-        targetParameter = TTarget::class.primaryConstructor?.parameters?.first { it.name == targetProperty.name }!!,
-        sourceResolution = GeneratedSourceResolution(generator = customValueResolver as Function1<Any?, *>),
-        conversion = noopConverter(TSource::class, TTargetReturn::class)
-    )
 }

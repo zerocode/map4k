@@ -53,7 +53,7 @@ class CanMapListsTest {
         val mapper = Mapper(
             config(
                 typeMap<SourceItems, TargetItems>(),
-                typeConversions = typeConverters(
+                userDefinedTypeConversions = typeConverters(
                     typeConverter(Int::toString)
                 )
             )

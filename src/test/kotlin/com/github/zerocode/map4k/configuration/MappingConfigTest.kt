@@ -1,10 +1,14 @@
 package com.github.zerocode.map4k.configuration
 
+import com.github.zerocode.map4k.extensions.returnTypeClass
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
+import com.natpryce.hamkrest.isEmpty
+import com.natpryce.hamkrest.present
 import org.junit.jupiter.api.Test
+import kotlin.reflect.full.primaryConstructor
 
-class MapConfigTest {
+class MappingConfigTest {
 
     interface Source
     interface Target
@@ -34,13 +38,28 @@ class MapConfigTest {
     }
 
     @Test
+    fun `creates an identity type map`() {
+        data class SourceImpl(val id: Int) : Source
+
+        val config = config(mappingOptions = options(dynamicTypeMapping = Enabled, identityTypeMapping = Enabled))
+        assertThat(config.typeMaps, isEmpty)
+        val actual = config.typeMapFor(SourceImpl::class, Source::class)
+        assertThat(actual, present())
+    }
+
+    @Test
     fun `PropertyMap exists where target property is matched in source by name`() {
         data class Source(val id: Int)
         data class Target(val id: Int)
 
         val typeMap = typeMap<Source, Target>().build()
-        val expected = listOf(namedPropertyMap(Source::id, Target::id)) as Collection<PropertyMap>
-        val actual = typeMap.propertyMaps
+        val expected = PropertyMap(
+            targetProperty = Target::id,
+            targetParameter = Target::class.primaryConstructor?.parameters?.first { it.name == "id" }!!,
+            sourceResolution = NamedSourceResolution(sourceProperty = Source::id),
+            conversion = TypeConversions.noopConverter(Source::id.returnTypeClass, Source::id.returnType, Target::id.returnTypeClass)
+        )
+        val actual = typeMap.propertyMaps.first()
 
         assertThat(actual, equalTo(expected))
     }
@@ -50,7 +69,12 @@ class MapConfigTest {
         data class Source(val id: Int)
         data class Target(val otherId: Int)
 
-        val expected = namedPropertyMap(Source::id, Target::otherId)
+        val expected = PropertyMap(
+            targetProperty = Target::otherId,
+            targetParameter = Target::class.primaryConstructor?.parameters?.first { it.name == "otherId" }!!,
+            sourceResolution = NamedSourceResolution(sourceProperty = Source::id),
+            conversion = TypeConversions.noopConverter(Source::id.returnTypeClass, Source::id.returnType, Target::otherId.returnTypeClass)
+        )
         val typeMap = typeMap<Source, Target>().propertyMap(Source::id, Target::otherId).build()
         val actual = typeMap.propertyMaps.first()
 
@@ -62,9 +86,14 @@ class MapConfigTest {
         data class Source(val id: Int)
         data class Target(val id: String)
 
-        val expected = listOf(convertedPropertyMap(Source::id, Target::id, Int::toString)) as Collection<PropertyMap>
+        val expected = PropertyMap(
+            targetProperty = Target::id,
+            targetParameter = Target::class.primaryConstructor?.parameters?.first { it.name == "id" }!!,
+            sourceResolution = ConvertedSourceResolution(sourceProperty = Source::id),
+            conversion = SimpleTypeConverter(Source::id.returnTypeClass, Target::id.returnTypeClass, Int::toString as (Any) -> Any)
+        )
         val typeMap = typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString).build()
-        val actual = typeMap.propertyMaps
+        val actual = typeMap.propertyMaps.first()
 
         assertThat(actual, equalTo(expected))
     }
@@ -74,34 +103,15 @@ class MapConfigTest {
         data class Source(val id: Int)
         data class Target(val id: String, val name: String = "default_name")
 
-        val expected = listOf(convertedPropertyMap(Source::id, Target::id, Int::toString)) as Collection<PropertyMap>
+        val expected = PropertyMap(
+            targetProperty = Target::id,
+            targetParameter = Target::class.primaryConstructor?.parameters?.first { it.name == "id" }!!,
+            sourceResolution = ConvertedSourceResolution(sourceProperty = Source::id),
+            conversion = SimpleTypeConverter(Source::id.returnTypeClass, Target::id.returnTypeClass, Int::toString as (Any) -> Any)
+        )
         val typeMap = typeMap<Source, Target>().propertyMap(Source::id, Target::id, Int::toString).build()
-        val actual = typeMap.propertyMaps
+        val actual = typeMap.propertyMaps.first()
 
         assertThat(actual, equalTo(expected))
     }
-
-    @Test
-    fun checker() {
-        val animal = Animal("lion")
-        check(animal)
-
-        val giraffe = Giraffe(10)
-        check(giraffe)
-
-        val organism = Giraffe(10) as Organism
-        check(organism)
-
-        check<Animal>(giraffe)
-        check<Organism>(giraffe)
-    }
-}
-
-interface Organism
-open class Animal(open val name: String) : Organism
-data class Giraffe(val height: Int) : Animal("Giraffe")
-
-inline fun <reified T : Any> check(item: T) {
-    println("Checking type: ${T::class}")
-    println("Checking item: ${item::class}")
 }
