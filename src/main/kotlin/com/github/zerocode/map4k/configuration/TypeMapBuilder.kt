@@ -3,12 +3,10 @@ package com.github.zerocode.map4k.configuration
 import com.github.zerocode.map4k.MappingException
 import com.github.zerocode.map4k.extensions.returnTypeClass
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.reflect
 
 data class TypeMapBuilder(
     val sourceClass: KClass<*>,
@@ -102,15 +100,5 @@ data class TypeMapBuilder(
                 else -> it
             }
         }
-    }
-
-    fun <T, U, V> propertydMap(kProperty1: KProperty1<U, V>, function: (T) -> V): Any {
-        val reflected = function.reflect()
-        val ref = reflected as KFunction1<T, V>
-        val returnType = ref.returnType
-        val params = ref.parameters
-        val returnTyper = reflected.returnType
-        val paramsr = reflected.parameters.first().type
-        return ref.call("") as Any
     }
 }
