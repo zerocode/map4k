@@ -20,7 +20,7 @@ dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: "$kotlinVersion"
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: "$kotlinVersion"
 
-    compile group: 'org.mongodb', name: 'mongo-java-driver', version: '3.10.0'
+    testCompile group: 'org.mongodb', name: 'bson', version: '4.2.3'
 
     testCompile group: 'com.natpryce', name: 'hamkrest', version: '1.6.0.0'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "$junitVersion"
